@@ -1,12 +1,16 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class DragAndDrop : MonoBehaviour
 {  
 	private bool _mouseState;
 	public GameObject Target;
+	public GameObject textBox;
 	public Vector3 screenSpace;
 	public Vector3 offset;
+	public enum constraintTypes {NONE, X,Y,Z};
+	public constraintTypes constraint = constraintTypes.NONE;
 
 	// Use this for initialization
 	void Start ()
@@ -17,7 +21,9 @@ public class DragAndDrop : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
-		// Debug.Log(_mouseState);
+		Text text = textBox.GetComponent<Text> (); 
+
+		//Debug.Log(_mouseState);
 		if (Input.GetMouseButtonDown (0)) {
 			RaycastHit hitInfo;
 			if (Target == GetClickedObject (out hitInfo)) {
@@ -29,6 +35,23 @@ public class DragAndDrop : MonoBehaviour
 		if (Input.GetMouseButtonUp (0)) {
 			_mouseState = false;
 		}
+
+		if (Input.GetKeyDown ("z")) {
+			constraint = constraintTypes.Z;
+			text.text = "Z";
+		} else if (Input.GetKeyDown ("x")) {
+			constraint = constraintTypes.X;
+			text.text = "X";
+		} else if (Input.GetKeyDown ("y")) {
+			constraint = constraintTypes.Y;
+			text.text = "Y";
+		}
+
+		if (constraint != constraintTypes.NONE && Input.GetKeyDown ("space")) {
+			constraint = constraintTypes.NONE;
+			text.text = "None";
+		}
+
 		if (_mouseState) {
 			//keep track of the mouse position
 			var curScreenSpace = new Vector3 (Input.mousePosition.x, Input.mousePosition.y, screenSpace.z);
@@ -39,8 +62,12 @@ public class DragAndDrop : MonoBehaviour
 			//update the position of the object in the world
 			//for constrained movement
 			Vector3 tempValues = Target.transform.position;
-			tempValues.x = curPosition.x;
-			tempValues.y = curPosition.y;
+			if( constraint == constraintTypes.NONE || constraint == constraintTypes.X )
+				tempValues.x = curPosition.x;
+			if( constraint == constraintTypes.NONE || constraint == constraintTypes.Y )
+				tempValues.y = curPosition.y;
+			if (constraint == constraintTypes.NONE || constraint == constraintTypes.Z)
+				tempValues.z = curPosition.z;
 			Target.transform.position = tempValues; 
 		}
 	}
