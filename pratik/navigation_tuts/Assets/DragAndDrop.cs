@@ -9,18 +9,22 @@ public class DragAndDrop : MonoBehaviour
 	public GameObject textBox;
 	public Vector3 screenSpace;
 	public Vector3 offset;
+	public Vector3 lastMousePos;
 	public enum constraintTypes {NONE, X,Y,Z};
-	public constraintTypes constraint = constraintTypes.NONE;
-
+	public enum moveTypes {Transform, Rotate, Scale};
+	public constraintTypes constraint;
+	public moveTypes mode;
 	// Use this for initialization
 	void Start ()
 	{
-
+		constraint = constraintTypes.NONE;
+		mode= moveTypes.Transform;
 	}
 
 	// Update is called once per frame
 	void Update ()
 	{
+
 		Text text = textBox.GetComponent<Text> (); 
 
 		//Debug.Log(_mouseState);
@@ -28,6 +32,7 @@ public class DragAndDrop : MonoBehaviour
 			RaycastHit hitInfo;
 			if (Target == GetClickedObject (out hitInfo)) {
 				_mouseState = true;
+				lastMousePos = Camera.main.ScreenToWorldPoint (Input.mousePosition) + offset;
 				screenSpace = Camera.main.WorldToScreenPoint (Target.transform.position);
 				offset = Target.transform.position - Camera.main.ScreenToWorldPoint (new Vector3 (Input.mousePosition.x, Input.mousePosition.y, screenSpace.z));
 			}
@@ -61,14 +66,40 @@ public class DragAndDrop : MonoBehaviour
 
 			//update the position of the object in the world
 			//for constrained movement
-			Vector3 tempValues = Target.transform.position;
-			if( constraint == constraintTypes.NONE || constraint == constraintTypes.X )
-				tempValues.x = curPosition.x;
-			if( constraint == constraintTypes.NONE || constraint == constraintTypes.Y )
-				tempValues.y = curPosition.y;
-			if (constraint == constraintTypes.NONE || constraint == constraintTypes.Z)
-				tempValues.z = curPosition.z;
-			Target.transform.position = tempValues; 
+
+			if (mode == moveTypes.Transform) {
+				Vector3 tempValues = Target.transform.position;
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.X)
+					tempValues.x = curPosition.x;
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.Y)
+					tempValues.y = curPosition.y;
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.Z)
+					tempValues.z = curPosition.z;
+				Target.transform.position = tempValues; 
+			} else if (mode == moveTypes.Rotate) {
+				float speedX = 5.0f;
+				float speedY = 5.0f;
+				float speedZ = 10.0f;
+				Vector3 tempValues = new Vector3 (0, 0, 0);
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.X)
+					tempValues.y = -curPosition.x * speedX;   // TODO : Why difference in the coordinate system here ?
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.Y)
+					tempValues.x = curPosition.y * speedY;   
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.Z)
+					tempValues.z = curPosition.z * speedZ;   
+				Target.transform.Rotate (tempValues, Space.World);
+			} else if (mode == moveTypes.Scale) {
+				/*
+				Vector3 tempValues = Target.transform.localScale;
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.X)
+					tempValues.x += curPosition.x - lastMousePos.x;
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.Y)
+					tempValues.y += curPosition.y - lastMousePos.y;
+				if (constraint == constraintTypes.NONE || constraint == constraintTypes.Z)
+					tempValues.z += curPosition.z - lastMousePos.z;
+				Target.transform.localScale = Vector3.Lerp (Target.transform.localScale, tempValues, Time.deltaTime);
+				*/
+			}
 		}
 	}
 
